@@ -31,7 +31,7 @@ class Recv(MessagingHandler):
         self.received = 0
 
     def on_start(self, event):
-        self.acceptor = event.container.listen(self.url)
+        event.container.create_receiver(self.url)
 
     def on_message(self, event):
         if event.message.id and event.message.id < self.received:
@@ -43,7 +43,6 @@ class Recv(MessagingHandler):
             if self.received == self.expected:
                 event.receiver.close()
                 event.connection.close()
-                self.acceptor.close()
 
 parser = optparse.OptionParser(usage="usage: %prog [options]")
 parser.add_option("-a", "--address", default="localhost:5672/examples",
@@ -55,3 +54,4 @@ opts, args = parser.parse_args()
 try:
     Container(Recv(opts.address, opts.messages)).run()
 except KeyboardInterrupt: pass
+
