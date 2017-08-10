@@ -22,6 +22,8 @@ if [ -d .ENV ]; then
     rm -rf .ENV 
 fi
 #else
+ yum install python-pip
+ pip install virtualenv
  virtualenv --system-site-packages .ENV
  source .ENV/bin/activate
  pip install -r ./requirements.txt
