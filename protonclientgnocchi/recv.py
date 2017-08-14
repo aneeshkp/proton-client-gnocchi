@@ -22,13 +22,16 @@ from __future__ import print_function
 import optparse
 from proton.handlers import MessagingHandler
 from proton.reactor import Container
-
+import gnocchi
 class Recv(MessagingHandler):
     def __init__(self, url, count):
         super(Recv, self).__init__()
         self.url = url
         self.expected = count
         self.received = 0
+        self.gnocchi=gnocchi.Gnocchi()
+        self.gnocchi.config()
+        self.gnocchi.init()
 
     def on_start(self, event):
         event.container.create_receiver(self.url)
@@ -38,7 +41,8 @@ class Recv(MessagingHandler):
             # ignore duplicate message
             return
         if self.expected == 0 or self.received < self.expected:
-            print(event.message.body)
+            self.gnocchi.write(event.message.body)
+            #print(event.message.body)
             self.received += 1
             if self.received == self.expected:
                 event.receiver.close()
