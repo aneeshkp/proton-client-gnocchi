@@ -28,24 +28,13 @@ import time
 import json
 class Gnocchi(object):
     def config(self):
-        # NOTE(sileht): Python threading system is not yet initialized here
-        # FIXME(sileht): We handle only one configuration block for now
         self.conf  = ConfigParser.ConfigParser()
         self.conf.read("amqp-gnocchi.conf")
 
-       # ict((c.key.lower(), c.values[0]) for c in
-       #                  config.children)
-
+     
     def init(self):
         auth_plugin = auth.GnocchiBasicPlugin(user="admin",endpoint="http://localhost:8041")
         self.g= client.Client(session_options={'auth': auth_plugin})
-       # s = session.Session(auth=auth)
-       # self.g = client.Client(
-       #     1, s,
-       #     interface=self.conf.get('api','interface'),
-       #     region_name=self.conf.get('api','region_name'),
-       #     endpoint_override=self.conf.get('api','endpoint'))
-       # print(self.conf.get('api','endpoint'));
         self._resource_type = "qpid_amqp"
         try:
             self.g.resource_type.get(self._resource_type)
@@ -60,8 +49,6 @@ class Gnocchi(object):
                 },
             })
 
-        self.values = []
-        self.batch_size = self.conf.get('api',"batchsize")
 
     @staticmethod
     def _serialize_identifier(index, v):
@@ -102,16 +89,10 @@ class Gnocchi(object):
             pass
 
     def write(self, metric_values):
-        #if len(self.values) >= self.batch_size:
         parsed_json=json.loads(metric_values)
-        print(json.dumps(metric_values))
-        print("\n");
-        print("----------------------------------------\n")
         host_id = "qpid_amqp:" + parsed_json[0]["host"].replace("/", "_")  
         host=parsed_json[0]["host"]
         measures = {host_id: collections.defaultdict(list)} 
-        print(host_id);
-        print("values\n")
         i=0
         for value in parsed_json[0]["values"]:
             measures[host_id][self._serialize_identifier(i,parsed_json[0])].append({"timestamp":parsed_json[0]["time"],"value":value,})
