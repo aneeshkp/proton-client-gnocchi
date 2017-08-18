@@ -24,14 +24,16 @@ from proton.handlers import MessagingHandler
 from proton.reactor import Container
 import gnocchi
 class Recv(MessagingHandler):
-    def __init__(self, url, count):
+    def __init__(self, url, count,enable_gnocchi):
         super(Recv, self).__init__()
         self.url = url
         self.expected = count
         self.received = 0
-        self.gnocchi=gnocchi.Gnocchi()
-        self.gnocchi.config()
-        self.gnocchi.init()
+        self.enable_gnocchi  = enable_gnocchi
+        if enable_gnocchi==1:
+	   self.gnocchi=gnocchi.Gnocchi()
+           self.gnocchi.config()
+           self.gnocchi.init()
 
     def on_start(self, event):
         event.container.create_receiver(self.url)
@@ -41,8 +43,10 @@ class Recv(MessagingHandler):
             # ignore duplicate message
             return
         if self.expected == 0 or self.received < self.expected:
-            self.gnocchi.write(event.message.body)
-            #print(event.message.body)
+            if self.enable_gnocchi==1:
+	       self.gnocchi.write(event.message.body)
+            else :
+	       print(event.message.body)
             self.received += 1
             if self.received == self.expected:
                 event.receiver.close()
@@ -53,10 +57,13 @@ parser.add_option("-a", "--address", default="localhost:5672/examples",
                   help="address from which messages are received (default %default)")
 parser.add_option("-m", "--messages", type="int", default=100,
                   help="number of messages to receive; 0 receives indefinitely (default %default)")
+parser.add_option("-g", "--gnocchi", type="int", default=0,
+                  help="1 is for write to gnocchi; 0 print to console (default %default)")
+
 opts, args = parser.parse_args()
 
 try:
-    Container(Recv(opts.address, opts.messages)).run()
+    Container(Recv(opts.address, opts.messages, opts.gnocchi)).run()
 except KeyboardInterrupt: pass
 
 
