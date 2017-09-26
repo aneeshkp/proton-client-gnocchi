@@ -44,9 +44,9 @@ class Recv(MessagingHandler):
             return
         if self.expected == 0 or self.received < self.expected:
             if self.enable_gnocchi==1:
-	       self.gnocchi.write(event.message.body)
+	               self.gnocchi.write(event.message.body)
             else :
-	       print(event.message.body)
+	               print(event.message.body)
             self.received += 1
             if self.received == self.expected:
                 event.receiver.close()
@@ -65,7 +65,3 @@ opts, args = parser.parse_args()
 try:
     Container(Recv(opts.address, opts.messages, opts.gnocchi)).run()
 except KeyboardInterrupt: pass
-
-
-
-
